@@ -8,18 +8,18 @@
     },
     "contributors": [
         {
-            "name": "",
-            "email": ""
+            "name": "Mackenzie McClellan",
+            "email": "mccl6596@stthomas.edu"
         },
         {
-            "name": "",
+            "name": "Cole Carlson",
             "email": ""
         }
     ],
     "main": "server.js",
     "repository": {
         "type": "git",
-        "url": ""
+        "url": "https://github.com/RWThompson7/Project3-RESTfulAPI.git"
     },
     "dependencies": {
         "express": "^4.18.2",
