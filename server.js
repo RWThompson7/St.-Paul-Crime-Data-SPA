@@ -36,7 +36,41 @@ app.get('/codes', (req, res) => {
 app.get('/neighborhoods', (req, res) => {
     console.log(req.query); // query object (key-value pairs after the ? in the url)
     
-    res.status(200).type('json').send({}); // <-- you will need to change this
+    let query = 'SELECT * FROM Neighborhoods'
+    if (err) {
+        res.status(500).send("Error: Neighborhood not in database");
+    }
+    else if (Object.keys(req.query).length === 0) {
+        db.all(query, (err, rows) => {
+            if (err) {
+                res.status(500).send("Error: Neighborhood not in database");
+            }
+            else {
+                res.status(200).type('json').send(rows);
+            }
+        });
+    }
+    else {
+        let id = req.query.id.split(',');
+        var clause = query + ' WHERE neighborhood_number = ' + id[0];
+        function id_resolver(array) {
+            var holder = '';
+            let i;
+            for (i=0; i < array.length; i++) {
+                holder = holder + " OR neighborhood_number = " + array[i];
+            }
+            return holder;
+        }
+        clause = clause + id_resolver(id);
+        db.all(clause, (err, rows) => {
+            if (err) {
+                res.status(500).send("Error: Neighborhood not in database");
+            }
+            else {
+                res.status(200).type('json').send(rows);
+            }
+        });
+    }
 });
 
 // GET request handler for crime incidents
