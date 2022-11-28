@@ -68,10 +68,60 @@ app.get('/neighborhoods', (req, res) => {
 
 // GET request handler for crime incidents
 app.get('/incidents', (req, res) => {
-    console.log(req.query); // query object (key-value pairs after the ? in the url)
-    
-    res.status(200).type('json').send({}); // <-- you will need to change this
+    // console.log(req.query); // query object (key-value pairs after the ? in the url)
+    params = [];
+
+    let query = 'SELECT * FROM Incidents';
+    if(Object.keys(req.query).length === 0) { //No specific parameters
+        databaseSelect(query)
+        .then((data) => {
+            res.status(200).type('json').send(data);
+        })
+        .catch((err) => {
+            res.status(500).send('Error: Unable to retrieve incidents');
+        });
+    } else {
+        query = buildIncidentQuery(query, req.query); 
+        console.log(query);
+
+        databaseSelect(query)
+        .then((data) => {
+            res.status(200).type('json').send(data);
+        })
+        .catch((err) => {
+            res.status(500).send('Error: Unable to retrieve incidents');
+        });
+    }
 });
+
+function buildIncidentQuery(query, obj) {
+    let keys = Object.keys(obj);
+    let clause = ' WHERE ';
+    if(keys.includes('code')) {
+        let codes = obj.code.split(',');
+        if(codes.length > 1) {
+            query += clause + 'code in (' + codes + ')';
+        } else if (codes.length === 1){
+            query += clause + 'code = ' + codes[0];
+        }
+        clause = ' AND ';
+    }
+    if(keys.includes('grid')) {
+        let grids = obj.grid.split(',');
+        if(grids.length > 1) {
+            query += clause + 'police_grid in (' + grids + ')';
+        } else if (grids.length === 1){
+            query += clause + 'police_grid = ' + grids[0];
+        }
+    }
+    if(keys.includes('limit')) { //Should be added to end of query
+        query += ' LIMIT ' + obj.limit;
+    } else { //Set default limit to 1000
+        query += ' LIMIT 1000';
+    }
+
+    return query;
+}
 
 // PUT request handler for new crime incident
 app.put('/new-incident', (req, res) => {
