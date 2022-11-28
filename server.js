@@ -47,42 +47,23 @@ app.get('/codes', (req, res) => {
 // GET request handler for neighborhoods
 app.get('/neighborhoods', (req, res) => {
     console.log(req.query); // query object (key-value pairs after the ? in the url)
-    
-    let query = 'SELECT * FROM Neighborhoods'
-    if (err) {
-        res.status(500).send("Error: Neighborhood not in database");
-    }
-    else if (Object.keys(req.query).length === 0) {
-        db.all(query, (err, rows) => {
-            if (err) {
-                res.status(500).send("Error: Neighborhood not in database");
-            }
-            else {
-                res.status(200).type('json').send(rows);
-            }
-        });
-    }
-    else {
-        let id = req.query.id.split(',');
-        var clause = query + ' WHERE neighborhood_number = ' + id[0];
-        function id_resolver(array) {
-            var holder = '';
-            let i;
-            for (i=0; i < array.length; i++) {
-                holder = holder + " OR neighborhood_number = " + array[i];
-            }
-            return holder;
+    let query = 'SELECT * FROM Neighborhoods ORDER BY neighborhood_number'
+    let params = [];
+    var id = req.query.id;
+    if (id !== undefined) {
+        var arr = id.split(",");
+        console.log(arr);
+        if(arr.length > 1) {
+            query = "SELECT * FROM Neighborhoods WHERE neighborhood_number in (" + arr + ')';
+        } else if (arr.length === 1){
+            query = "SELECT * FROM Neighborhoods WHERE neighborhood_number = ? ORDER BY neighborhood_number";
+            params = arr;
         }
-        clause = clause + id_resolver(id);
-        db.all(clause, (err, rows) => {
-            if (err) {
-                res.status(500).send("Error: Neighborhood not in database");
-            }
-            else {
-                res.status(200).type('json').send(rows);
-            }
-        });
     }
+    databaseSelect(query, params)
+    .then(values => {
+        res.status(200).type('json').send(values);
+    });
 });
 
 // GET request handler for crime incidents
