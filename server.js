@@ -27,9 +27,21 @@ let db = new sqlite3.Database(db_filename, sqlite3.OPEN_READWRITE, (err) => {
 
 // GET request handler for crime codes
 app.get('/codes', (req, res) => {
-    console.log(req.query); // query object (key-value pairs after the ? in the url)
-    
-    res.status(200).type('json').send({}); // <-- you will need to change this
+    let query = "SELECT * FROM Codes ORDER BY code";
+    let params = [];
+    let codes = req.query.code;
+    if (codes !== undefined) {
+        var array = codes.split(",");
+        if(array.length > 1) {
+            query = "SELECT * FROM Codes WHERE code in (" + array + ')';
+        } else if (array.length === 1){
+            query = "SELECT * FROM Codes WHERE code = ? ORDER BY code";
+            params = codes;
+        }
+    }
+    databaseSelect(query, params).then(values => {
+        res.status(200).type('json').send(values);
+    });
 });
 
 // GET request handler for neighborhoods
@@ -105,8 +117,8 @@ function databaseSelect(query, params) {
             else {
                 resolve(rows);
             }
-        })
-    })
+        });
+    });
 }
 
 // Create Promise for SQLite3 database INSERT or DELETE query
@@ -120,7 +132,7 @@ function databaseRun(query, params) {
                 resolve();
             }
         });
-    })
+    });
 }
 
 
