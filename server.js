@@ -68,9 +68,6 @@ app.get('/neighborhoods', (req, res) => {
 
 // GET request handler for crime incidents
 app.get('/incidents', (req, res) => {
-    // console.log(req.query); // query object (key-value pairs after the ? in the url)
-    params = [];
-
     let query = 'SELECT * FROM Incidents';
     if(Object.keys(req.query).length === 0) { //No specific parameters
         databaseSelect(query)
@@ -82,8 +79,7 @@ app.get('/incidents', (req, res) => {
         });
     } else {
         query = buildIncidentQuery(query, req.query); 
-        console.log(query);
-
+        // console.log(query);
         databaseSelect(query)
         .then((data) => {
             res.status(200).type('json').send(data);
@@ -97,6 +93,14 @@ app.get('/incidents', (req, res) => {
 function buildIncidentQuery(query, obj) {
     let keys = Object.keys(obj);
     let clause = ' WHERE ';
+    if(keys.includes('start_date')) {
+        query += clause + "date_time > date('" + obj.start_date + "')";
+        clause = ' AND ';
+    }
+    if(keys.includes('end_date')) {
+        query += clause + "date_time < date('" + obj.end_date + "')";
+        clause = ' AND ';
+    }
     if(keys.includes('code')) {
         let codes = obj.code.split(',');
         if(codes.length > 1) {
@@ -113,6 +117,16 @@ function buildIncidentQuery(query, obj) {
         } else if (grids.length === 1){
             query += clause + 'police_grid = ' + grids[0];
         }
+        clause = ' AND ';
+    }
+    if(keys.includes('neighborhood')) {
+        let hoods = obj.neighborhood.split(',');
+        if(hoods.length > 1) {
+            query += clause + 'neighborhood_number in (' + hoods + ')';
+        } else if (grids.length === 1){
+            query += clause + 'neighborhood_number = ' + hoods[0];
+        }
+        clause = ' AND ';
     }
     if(keys.includes('limit')) { //Should be added to end of query
         query += ' LIMIT ' + obj.limit;
