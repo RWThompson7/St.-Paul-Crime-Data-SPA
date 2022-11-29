@@ -27,20 +27,25 @@ let db = new sqlite3.Database(db_filename, sqlite3.OPEN_READWRITE, (err) => {
 
 // GET request handler for crime codes
 app.get('/codes', (req, res) => {
-    let query = "SELECT * FROM Codes ORDER BY code";
+    let query = "SELECT * FROM Codes";
     let params = [];
     let codes = req.query.code;
     if (codes !== undefined) {
         var array = codes.split(",");
-        if(array.length > 1) {
-            query = "SELECT * FROM Codes WHERE code in (" + array + ')';
-        } else if (array.length === 1){
-            query = "SELECT * FROM Codes WHERE code = ? ORDER BY code";
+        if (array.length > 1) {
+            query += " WHERE code in (" + array + ')';
+        } else {
+            query += " WHERE code = ?";
             params = codes;
         }
     }
-    databaseSelect(query, params).then(values => {
-        res.status(200).type('json').send(values);
+    query += " ORDER BY code";
+    databaseSelect(query, params)
+    .then(data => {
+        res.status(200).type('json').send(data);
+    })
+    .catch(err => {
+        res.status(500).send('Error: ' + err);
     });
 });
 
@@ -63,6 +68,9 @@ app.get('/neighborhoods', (req, res) => {
     databaseSelect(query, params)
     .then(values => {
         res.status(200).type('json').send(values);
+    })
+    .catch(err => {
+        res.status(500).send('Error: ' + err);
     });
 });
 
@@ -139,32 +147,43 @@ function buildIncidentQuery(query, obj) {
 
 // PUT request handler for new crime incident
 app.put('/new-incident', (req, res) => {
-    console.log(req.body); // uploaded data
     let data = req.body;
-    var date_time = data.date + 'T' + data.time;
-    let params = [data.case_number, date_time, data.code, data.incident, data.police_grid, data.neighborhood_number, data.block];
-    let query = "INSERT INTO incidents VALUES (?, ?, ?, ?, ?, ?, ?);"
-    databaseRun(query, params)
-    .then(() => {
-        res.status(200).type('txt').send('OK'); // <-- you may need to change this
+    databaseSelect("SELECT * FROM Incidents WHERE case_number = ?", data.case_number)
+    .then((data) => {
+        res.status(500).send('Error: Case_number already exists in the database');
     })
     .catch((err) => {
-        res.status(500).type('txt').send('Unable to insert new incident due to ' + err);
-    })
+        if(err !== "No Records Found") {
+            res.status(500).send('Error: ' + err);
+        }
+        var date_time = data.date + 'T' + data.time;
+        let params = [data.case_number, date_time, data.code, data.incident, data.police_grid, data.neighborhood_number, data.block];
+        let query = "INSERT INTO incidents VALUES (?, ?, ?, ?, ?, ?, ?);"
+        databaseRun(query, params)
+            .then(() => {
+                res.status(200).type('txt').send('OK');
+            })
+            .catch((err) => {
+                res.status(500).type('txt').send('Unable to insert new incident due to ' + err);
+            })
+    });
 });
 
 // DELETE request handler for new crime incident
 app.delete('/remove-incident', (req, res) => {
-    console.log(req.body); // uploaded data
-    let data = req.body;
-    let query = "DELETE FROM incidents WHERE case_number = ?"
-    let params = [data.case_number]
-    databaseRun(query, params)
-    .then(() => {
-        res.status(200).type('txt').send('OK');
+    databaseSelect("SELECT * FROM Incidents WHERE case_number = ?", req.body.case_number)
+    .then((data) => {
+        let query = "DELETE FROM incidents WHERE case_number = ?"
+        databaseRun(query, req.body.case_number)
+            .then(() => {
+                res.status(200).type('txt').send('OK'+ this.change);
+            })
+            .catch((err) => {
+                res.status(500).type('txt').send('Error: ' + err);
+            });
     })
     .catch((err) => {
-        res.status(500).type('txt').send('Unable to remove incident due to ' + err);
+        res.status(500).send('Error: ' + err);
     });
 });
 
@@ -175,6 +194,9 @@ function databaseSelect(query, params) {
         db.all(query, params, (err, rows) => {
             if (err) {
                 reject(err);
+            }
+            else if (rows.length === 0) {
+                reject("No Records Found");
             }
             else {
                 resolve(rows);
