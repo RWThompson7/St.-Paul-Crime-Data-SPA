@@ -86,8 +86,7 @@ app.get('/incidents', (req, res) => {
             res.status(500).send('Error: Unable to retrieve incidents');
         });
     } else {
-        query = buildIncidentQuery(query, req.query); 
-        // console.log(query);
+        query = buildIncidentQuery(query, req.query);
         databaseSelect(query)
         .then((data) => {
             res.status(200).type('json').send(data);
@@ -164,7 +163,7 @@ app.put('/new-incident', (req, res) => {
                 res.status(200).type('txt').send('OK');
             })
             .catch((err) => {
-                res.status(500).type('txt').send('Unable to insert new incident due to ' + err);
+                res.status(500).send('Unable to insert new incident due to ' + err);
             })
     });
 });
@@ -179,7 +178,7 @@ app.delete('/remove-incident', (req, res) => {
                 res.status(200).type('txt').send('OK'+ this.change);
             })
             .catch((err) => {
-                res.status(500).type('txt').send('Error: ' + err);
+                res.status(500).send('Error: ' + err);
             });
     })
     .catch((err) => {
