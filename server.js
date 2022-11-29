@@ -140,8 +140,17 @@ function buildIncidentQuery(query, obj) {
 // PUT request handler for new crime incident
 app.put('/new-incident', (req, res) => {
     console.log(req.body); // uploaded data
-    
-    res.status(200).type('txt').send('OK'); // <-- you may need to change this
+    let data = req.body;
+    var date_time = data.date + 'T' + data.time;
+    let params = [data.case_number, date_time, data.code, data.incident, data.police_grid, data.neighborhood_number, data.block];
+    let query = "INSERT INTO incidents VALUES (?, ?, ?, ?, ?, ?, ?);"
+    databaseRun(query, params)
+    .then(() => {
+        res.status(200).type('txt').send('OK'); // <-- you may need to change this
+    })
+    .catch((err) => {
+        res.status(500).type('txt').send('Unable to insert new incident due to ' + err);
+    })
 });
 
 // DELETE request handler for new crime incident
