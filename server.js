@@ -159,12 +159,12 @@ app.put('/new-incident', (req, res) => {
         let params = [data.case_number, date_time, data.code, data.incident, data.police_grid, data.neighborhood_number, data.block];
         let query = "INSERT INTO incidents VALUES (?, ?, ?, ?, ?, ?, ?);"
         databaseRun(query, params)
-            .then(() => {
-                res.status(200).type('txt').send('OK');
-            })
-            .catch((err) => {
-                res.status(500).send('Unable to insert new incident due to ' + err);
-            })
+        .then(() => {
+            res.status(200).type('txt').send('OK');
+        })
+        .catch((err) => {
+            res.status(500).type('txt').send('Unable to insert new incident due to ' + err);
+        })
     });
 });
 
@@ -174,12 +174,12 @@ app.delete('/remove-incident', (req, res) => {
     .then((data) => {
         let query = "DELETE FROM incidents WHERE case_number = ?"
         databaseRun(query, req.body.case_number)
-            .then(() => {
-                res.status(200).type('txt').send('OK'+ this.change);
-            })
-            .catch((err) => {
-                res.status(500).send('Error: ' + err);
-            });
+        .then(() => {
+            res.status(200).type('txt').send('OK '+ this.change);
+        })
+        .catch((err) => {
+            res.status(500).type('txt').send('Error: ' + err);
+        });
     })
     .catch((err) => {
         res.status(500).send('Error: ' + err);
