@@ -89,6 +89,12 @@ app.get('/incidents', (req, res) => {
         query = buildIncidentQuery(query, req.query);
         databaseSelect(query)
         .then((data) => {
+            //split date and time
+            for(let i = 0; i < data.length; i++) {
+                data[i].date = data[i].date_time.split('T')[0];
+                data[i].time = data[i].date_time.split('T')[1];
+                delete data[i].date_time;
+            }
             res.status(200).type('json').send(data);
         })
         .catch((err) => {
