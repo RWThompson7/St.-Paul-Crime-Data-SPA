@@ -1,6 +1,7 @@
 // Built-in Node.js modules
 let fs = require('fs');
 let path = require('path');
+let cors = require('cors');
 
 // NPM modules
 let express = require('express');
@@ -10,9 +11,10 @@ let sqlite3 = require('sqlite3');
 let db_filename = path.join(__dirname, 'db', 'stpaul_crime.sqlite3');
 
 let app = express();
-let port = 8000;
+let port = 8080;
 
 app.use(express.json());
+app.use(cors());
 
 // Open SQLite3 database (in read-only mode)
 let db = new sqlite3.Database(db_filename, sqlite3.OPEN_READWRITE, (err) => {
@@ -77,41 +79,31 @@ app.get('/neighborhoods', (req, res) => {
 // GET request handler for crime incidents
 app.get('/incidents', (req, res) => {
     let query = 'SELECT * FROM Incidents';
-    if(Object.keys(req.query).length === 0) { //No specific parameters
-        databaseSelect(query)
-        .then((data) => {
-            res.status(200).type('json').send(data);
-        })
-        .catch((err) => {
-            res.status(500).send('Error: Unable to retrieve incidents');
-        });
-    } else {
-        query = buildIncidentQuery(query, req.query);
-        databaseSelect(query)
-        .then((data) => {
-            //split date and time
-            for(let i = 0; i < data.length; i++) {
-                data[i].date = data[i].date_time.split('T')[0];
-                data[i].time = data[i].date_time.split('T')[1];
-                delete data[i].date_time;
-            }
-            res.status(200).type('json').send(data);
-        })
-        .catch((err) => {
-            res.status(500).send('Error: Unable to retrieve incidents');
-        });
-    }
+    query = buildIncidentQuery(query, req.query);
+    databaseSelect(query)
+    .then((data) => {
+        //split date and time
+        for(let i = 0; i < data.length; i++) {
+            data[i].date = data[i].date_time.split('T')[0];
+            data[i].time = data[i].date_time.split('T')[1];
+            delete data[i].date_time;
+        }
+        res.status(200).type('json').send(data);
+    })
+    .catch((err) => {
+        res.status(500).send('Error: Unable to retrieve incidents');
+    });
 });
 
 function buildIncidentQuery(query, obj) {
     let keys = Object.keys(obj);
     let clause = ' WHERE ';
     if(keys.includes('start_date')) {
-        query += clause + "date_time > date('" + obj.start_date + "')";
+        query += clause + "date_time => date('" + obj.start_date + "')";
         clause = ' AND ';
     }
     if(keys.includes('end_date')) {
-        query += clause + "date_time < date('" + obj.end_date + "')";
+        query += clause + "date_time <= date('" + obj.end_date + "')";
         clause = ' AND ';
     }
     if(keys.includes('code')) {
@@ -141,12 +133,12 @@ function buildIncidentQuery(query, obj) {
         }
         clause = ' AND ';
     }
+    query += ' ORDER BY date_time DESC'
     if(keys.includes('limit')) { //Should be added to end of query
         query += ' LIMIT ' + obj.limit;
     } else { //Set default limit to 1000
         query += ' LIMIT 1000';
     }
-
     return query;
 }
 
