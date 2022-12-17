@@ -168,10 +168,10 @@ app.put('/new-incident', (req, res) => {
 
 // DELETE request handler for new crime incident
 app.delete('/remove-incident', (req, res) => {
-    databaseSelect("SELECT * FROM Incidents WHERE case_number = ?", req.body.case_number)
+    databaseSelect("SELECT * FROM Incidents WHERE case_number = ?", req.query.case_number)
     .then((data) => {
         let query = "DELETE FROM incidents WHERE case_number = ?"
-        databaseRun(query, req.body.case_number)
+        databaseRun(query, req.query.case_number)
         .then(() => {
             res.status(200).type('txt').send('OK '+ this.change);
         })
