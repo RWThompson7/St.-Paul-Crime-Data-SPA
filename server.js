@@ -11,7 +11,7 @@ let sqlite3 = require('sqlite3');
 let db_filename = path.join(__dirname, 'db', 'stpaul_crime.sqlite3');
 
 let app = express();
-let port = 8080;
+let port = 8000;
 
 app.use(express.json());
 app.use(cors());
@@ -219,8 +219,9 @@ function databaseRun(query, params) {
     });
 }
 
-
 // Start server - listen for client connections
 app.listen(port, () => {
     console.log('Now listening on port ' + port);
 });
+
+
