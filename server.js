@@ -97,6 +97,7 @@ app.get('/incidents', (req, res) => {
 
 function buildIncidentQuery(query, obj) {
     let keys = Object.keys(obj);
+    console.log(keys);
     let clause = ' WHERE ';
     if(keys.includes('start_date')) {
         query += clause + "date_time => date('" + obj.start_date + "')";
@@ -116,6 +117,7 @@ function buildIncidentQuery(query, obj) {
         clause = ' AND ';
     }
     if(keys.includes('grid')) {
+        console.log('here');
         let grids = obj.grid.split(',');
         if(grids.length > 1) {
             query += clause + 'police_grid in (' + grids + ')';
@@ -128,7 +130,7 @@ function buildIncidentQuery(query, obj) {
         let hoods = obj.neighborhood.split(',');
         if(hoods.length > 1) {
             query += clause + 'neighborhood_number in (' + hoods + ')';
-        } else if (grids.length === 1){
+        } else if (hoods.length === 1){
             query += clause + 'neighborhood_number = ' + hoods[0];
         }
         clause = ' AND ';
