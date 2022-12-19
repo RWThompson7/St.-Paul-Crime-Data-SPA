@@ -80,6 +80,7 @@ app.get('/neighborhoods', (req, res) => {
 app.get('/incidents', (req, res) => {
     let query = 'SELECT * FROM Incidents';
     query = buildIncidentQuery(query, req.query);
+    console.log(query);
     databaseSelect(query)
     .then((data) => {
         //split date and time
@@ -100,7 +101,7 @@ function buildIncidentQuery(query, obj) {
     console.log(keys);
     let clause = ' WHERE ';
     if(keys.includes('start_date')) {
-        query += clause + "date_time => date('" + obj.start_date + "')";
+        query += clause + "date_time >= date('" + obj.start_date + "')";
         clause = ' AND ';
     }
     if(keys.includes('end_date')) {
